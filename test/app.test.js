@@ -90,3 +90,15 @@ describe('DELETE /bookmarks/:id', () => {
       .expect(204)
   });
 });
+
+/**
+ * TO DO: 
+ * 1) Create a test to make sure the logger is working
+ * use a spy?  E.g., this code using jest: 
+ * 
+// create winstonLoggerInstance here, e.g. in beforeEach()....
+const winstonLoggerMock = jest.spyOn(winstonLoggerInstance, 'log');
+serviceInstance.debug('debug sent from test');
+expect(winstonLoggerMock).toHaveBeenCalled();
+ * 2) Other tests?
+ */
