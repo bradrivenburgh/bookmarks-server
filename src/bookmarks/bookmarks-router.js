@@ -2,8 +2,6 @@ const express = require('express');
 const { v4: uuid } = require('uuid');
 const { logger } = require('../logger');
 const { bookmarks } = require('../store');
-const { json } = require('express');
-
 
 const bookmarksRouter = express.Router();
 const bodyParser = express.json();
@@ -12,7 +10,9 @@ const bodyParser = express.json();
 bookmarksRouter
   .route('/bookmarks')
   .get((req, res) => {
-    res.json(bookmarks);
+    res
+      .status(200)
+      .json(bookmarks);
   })
   .post(bodyParser, (req, res) => {
     // Get the data from the request body; default values for optional props
@@ -76,7 +76,9 @@ bookmarksRouter
     }
 
     // Send requested bookmark in json format
-    res.json(bookmark);
+    res
+      .status(200)
+      .json(bookmark);
   })
   .delete((req, res) => {
     // Get the id from the request params
@@ -91,7 +93,7 @@ bookmarksRouter
       logger.error(`Bookmark with the id ${id} does not exist`)
       return res
         .status(404)
-        .json({ error: "Not found" });
+        .json({ error: "Bookmark not found" });
     }
 
     // Remove the bookmark from the bookmarks list; assume IDs are unique

@@ -51,7 +51,7 @@ app.use(errorHandler);
 
 // Add endpoints
 app.get('/', (req, res) => {
-  res.send('Hello, boilerplate!');
+  res.send('Hello, bookmarks-app!');
 });
 
 module.exports = app;
