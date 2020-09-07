@@ -1,11 +1,11 @@
 require('dotenv').config();
 const express = require('express');
-//const { logger } = require('../logger');
+const { logger } = require('./logger');
 const morgan = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
 const { NODE_ENV } = require('./config');
-// Routers go below here
+const { bookmarksRouter } = require('./bookmarks/bookmarks-router');
 
 const app = express();
 
@@ -46,8 +46,7 @@ app.use(cors());
 app.use(helmet());
 app.use(express.json());
 app.use(validateBearerToken);
-// Routers to go here
-
+app.use(bookmarksRouter);
 app.use(errorHandler);
 
 // Add endpoints
