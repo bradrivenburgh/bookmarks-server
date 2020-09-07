@@ -13,7 +13,10 @@ bookmarksRouter
     res
       .status(200)
       .json(bookmarks);
-  })
+  });
+
+bookmarksRouter
+  .route('/bookmarks')
   .post(bodyParser, (req, res) => {
     // Get the data from the request body; default values for optional props
     const { title, url, description='', rating=0 } = req.body;
@@ -79,7 +82,10 @@ bookmarksRouter
     res
       .status(200)
       .json(bookmark);
-  })
+  });
+
+bookmarksRouter
+  .route('/bookmarks/:id')
   .delete((req, res) => {
     // Get the id from the request params
     const { id } = req.params;
