@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuid } = require('uuid');
 const { logger } = require('../logger');
 const { bookmarks } = require('../store');
+const { json } = require('express');
 
 
 const bookmarksRouter = express.Router();
@@ -77,6 +78,33 @@ bookmarksRouter
     // Send requested bookmark in json format
     res.json(bookmark);
   })
+  .delete((req, res) => {
+    // Get the id from the request params
+    const { id } = req.params;
+
+    // Get the bookmark index in the bookmarks list; returns -1 if
+    // it doesn't exist
+    const bookmarkIndex = bookmarks.findIndex(b => b.id === id);
+
+    //Validate wether the bookmark exists
+    if (bookmarkIndex === -1) {
+      logger.error(`Bookmark with the id ${id} does not exist`)
+      return res
+        .status(404)
+        .json({ error: "Not found" });
+    }
+
+    // Remove the bookmark from the bookmarks list; assume IDs are unique
+    bookmarks.splice(bookmarkIndex, 1);
+
+    // Log the deletion of the new bookmark
+    logger.info(`Bookmark with the id ${id} deleted.`)
+    
+    // Send client 204 and end
+    res
+      .status(204)
+      .end();
+  });
 
 
 module.exports = {
