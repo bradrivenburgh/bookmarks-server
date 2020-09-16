@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuid } = require('uuid');
 const { logger } = require('../logger');
 const { bookmarks } = require('../store');
+const BookmarksService = require('../BookmarksService');
 
 const bookmarksRouter = express.Router();
 const bodyParser = express.json();
@@ -9,18 +10,23 @@ const bodyParser = express.json();
 // Set up /bookmarks router / endpoint
 bookmarksRouter
   .route('/bookmarks')
-  .get((req, res) => {
-    res
-      .status(200)
-      .json(bookmarks);
+  .get((req, res, next) => {
+    const knexInstance = req.app.get('db');
+    BookmarksService.getAllBookmarks(knexInstance)
+      .then(bookmarks => {
+        res
+          .status(200)
+          .json(bookmarks)
+      })
+      .catch(next)
   });
 
 bookmarksRouter
   .route('/bookmarks')
   .post(bodyParser, (req, res) => {
     // Get the data from the request body; default values for optional props
-    const { title, url, description='', rating=0 } = req.body;
-    console.log(title)
+    const { title, url, description, rating } = req.body;
+
     // Validate the data: title and url required
     if (!title) {
       logger.error('Title is required');
