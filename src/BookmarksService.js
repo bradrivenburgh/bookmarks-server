@@ -6,6 +6,13 @@ const BookmarksService = {
       .from('bookmarks');
   }, 
   //getById
+  getById(knexInstance, id) {
+    return knexInstance
+      .select('*')
+      .from('bookmarks')
+      .where('id', id)
+      .first();
+  }
 
   //deleteBookmark
 

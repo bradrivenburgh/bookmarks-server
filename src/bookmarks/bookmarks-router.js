@@ -70,24 +70,26 @@ bookmarksRouter
 // Set up /bookmarks/:id router / endpoint
 bookmarksRouter
   .route('/bookmarks/:id')
-  .get((req, res) => {
-    // Get the id param
-    const { id } = req.params;
-    // Find the first bookmark with correct id from the bookmarks list
-    const bookmark = bookmarks.find(b => b.id === id);
+  .get((req, res, next) => {
+    // Get the knexInstance that was set on server.js
+    const knexInstance = req.app.get('db');
+    const id = req.params.id;
 
-    // Validate the bookmark existence.  If not, return and log 404 error / message
-    if (!bookmark) {
-      logger.error(`Bookmark with id ${id} does not exist`)
-      return res
-        .status(404)
-        .json({ error: 'Bookmark not found'});
-    }
-
-    // Send requested bookmark in json format
-    res
-      .status(200)
-      .json(bookmark);
+    BookmarksService.getById(knexInstance, id)
+      .then(bookmark => {
+        // Validate the bookmark existence.  If not, return and log 404 error / message
+        if (!bookmark) {
+          logger.error(`Bookmark with id ${id} does not exist`)
+          return res
+            .status(404)
+            .json({ error: 'Bookmark not found'});
+        }
+        // Send requested bookmark in json format
+        res
+          .status(200)
+          .json(bookmark);
+      })
+      .catch(next);
   });
 
 bookmarksRouter
