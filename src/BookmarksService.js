@@ -10,13 +10,20 @@ const BookmarksService = {
       .from('bookmarks')
       .where('id', id)
       .first();
-  }
+  },
+  //insertBookmark
+  insertArticle(knexInstance, newBookmark) {
+    return knexInstance
+      .insert(newBookmark)
+      .into('bookmarks')
+      .returning('*')
+      .then(rows => rows[0])
+  },
 
   //deleteBookmark
 
   //updateBookmark
 
-  //insertBookmark
 };
 
 module.exports = BookmarksService;

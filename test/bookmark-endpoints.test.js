@@ -74,6 +74,35 @@ describe.only('Bookmarks Endpoints', () => {
           .expect(200, expectedBookmark);
       });
     });
-  })
+  });
 
+  describe('POST /bookmarks', () => {
+    it('creates a bookmark, responds with 201 and new article', () => {
+      const newBookmark = {
+        title: "Some Title",
+        url: "http://someurl.com",
+        description: "A sample description...",
+        rating: 4
+      }
+      return supertest(app)
+        .post('/bookmarks')
+        .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+        .send(newBookmark)
+        .expect(201)
+        .expect(res => {
+          expect(res.body.title).to.eql(newBookmark.title);
+          expect(res.body.description).to.eql(newBookmark.description);
+          expect(res.body.url).to.eql(newBookmark.url);
+          expect(res.body).to.have.property('id');
+          expect(res.headers.location).to.eql(`/bookmarks/${res.body.id}`);
+        })  
+        .then(postRes => {
+          return supertest(app)
+            .get(`/bookmarks/${postRes.body.id}`)
+            .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+            .expect(postRes.body)
+        });
+          
+      });
+  });
 });

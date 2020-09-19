@@ -1,13 +1,20 @@
 const express = require('express');
+const xss = require('xss');
 const { v4: uuid } = require('uuid');
 const { logger } = require('../logger');
 const { bookmarks } = require('../store');
+const { validateProperties } = require('./validationFuncs');
 const BookmarksService = require('../BookmarksService');
 
 const bookmarksRouter = express.Router();
-const bodyParser = express.json();
+const sanitizedBookmark = (bookmark) => ({
+  id: bookmark.id,
+  title: xss(bookmark.title),
+  url: xss(bookmark.url),
+  description: xss(bookmark.description),
+  rating: bookmark.rating
+})
 
-// Set up /bookmarks router / endpoint
 bookmarksRouter
   .route('/bookmarks')
   .get((req, res, next) => {
@@ -23,48 +30,54 @@ bookmarksRouter
 
 bookmarksRouter
   .route('/bookmarks')
-  .post(bodyParser, (req, res) => {
-    // Get the data from the request body; default values for optional props
+  .post((req, res, next) => {
+    // Create knex instance
+    const knexInstance = req.app.get('db');
+    
+    // Get props from request body
     const { title, url, description, rating } = req.body;
-
-    // Validate the data: title and url required
-    if (!title) {
-      logger.error('Title is required');
-      return res
-        .status(400)
-        .json({ error: 'Invalid data' });
-    }
-
-    if (!url) {
-      logger.error('URL is required');
-      return res
-        .status(400)
-        .json({ error: 'Invalid data' });
-    }
-
-    // Generate a unique id
-    const id = uuid();
-
-    // Create the bookmark data
-    const bookmark = {
-      id,
+    const newBookmark = {
       title,
       url,
       description,
       rating
     }
+ 
+    // Define the required properties
+    const requiredProps = ['title', 'url', 'rating'];
 
-    // Add the bookmark to the bookmarks list
-    bookmarks.push(bookmark);
+    // Validate properties in the request body
+    const errorObject = validateProperties(req.body, requiredProps);
 
-    // Log bookmark creation 
-    logger.info(`Card with the id ${id} created`);
-    
-    // Send response with location header and created bookmark
-    res
-      .status(201)
-      .location(`http://localhost:8000/bookmarks/${id}`)
-      .json(bookmark);
+    // If needed, log and respond with missing or invalid props
+    if(Object.keys(errorObject).length) {
+      const {missingReqProps, invalidProps} = errorObject;
+      if (missingReqProps) {
+        logger.error(`Required properties are missing: ${missingReqProps.join(', ')}`);
+      }
+      if (invalidProps) {
+        logger.error(`Invalid property values provided: ${invalidProps.join(', ')}`);
+      }
+
+      // Send 400 response and object with missing and invalid props
+      return res
+        .status(400)
+        .json({error: errorObject})
+    }
+
+    // Add the bookmark to the database
+    BookmarksService.insertArticle(knexInstance, newBookmark)
+      .then(bookmark => {
+        // Log bookmark creation 
+        logger.info(`Card with the id ${bookmark.id} created`);
+
+        // Send response with location header and created bookmark
+        res
+          .status(201)
+          .location(`/bookmarks/${bookmark.id}`)
+          .json(sanitizedBookmark(bookmark))
+      })
+      .catch(next);
   });
 
 // Set up /bookmarks/:id router / endpoint
