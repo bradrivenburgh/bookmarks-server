@@ -1,6 +1,6 @@
 const knex = require('knex');
 const app = require('../src/app');
-const { makeBookmarksArray } = require('./bookmarks.fixtures');
+const { makeBookmarksArray, makeMaliciousBookmark } = require('./bookmarks.fixtures');
 
 describe.only('Bookmarks Endpoints', () => {
   let db;
@@ -103,24 +103,42 @@ describe.only('Bookmarks Endpoints', () => {
             .expect(postRes.body)
         });
       });
+    });
 
-      const requiredFields = ['title', 'url', 'rating'];
-      requiredFields.forEach(field => {
-        const newBookmark = {
-          title: "Some Title",
-          url: "http://someurl.com",
-          rating: 4
-          };
-    
-        it(`responds with 400 and an error message when the '${field}' is missing`, () => {
-          delete newBookmark[field];
+    const requiredFields = ['title', 'url', 'rating'];
+    requiredFields.forEach(field => {
+      const newBookmark = {
+        title: "Some Title",
+        url: "http://someurl.com",
+        rating: 4
+        };
   
-          return supertest(app)
-            .post('/bookmarks')
-            .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
-            .send(newBookmark)
-            .expect(400, { error: { missingReqProps: [ `${field}` ] } });
-        });
+      it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+        delete newBookmark[field];
+
+        return supertest(app)
+          .post('/bookmarks')
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .send(newBookmark)
+          .expect(400, { error: { missingReqProps: [ `${field}` ] } });
       });
     });
+
+    context(`Given an XSS attack bookmark`, () => {
+      const { maliciousBookmark, expectedBookmark } = makeMaliciousBookmark();
+  
+      it("removes XSS attack content", () => {
+        return supertest(app)
+          .post(`/bookmarks`)
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .send(maliciousBookmark)
+          .expect(201)
+          .expect((res) => {
+            expect(res.body.title).to.eql(expectedBookmark.title);
+            expect(res.body.description).to.eql(expectedBookmark.description);
+          });
+      });
+    });
+
+
 });
