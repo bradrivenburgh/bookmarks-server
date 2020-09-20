@@ -59,7 +59,7 @@ bookmarksRouter
         logger.error(`Invalid property values provided: ${invalidProps.join(', ')}`);
       }
 
-      // Send 400 response and object with missing and invalid props
+      // Send 400 response and object with missing and/or invalid props
       return res
         .status(400)
         .json({error: errorObject})
@@ -80,6 +80,7 @@ bookmarksRouter
       .catch(next);
   });
 
+// LOCAL STORAGE BELOW THIS POINT; CONVERT TO DB
 // Set up /bookmarks/:id router / endpoint
 bookmarksRouter
   .route('/bookmarks/:id')

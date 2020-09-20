@@ -102,7 +102,25 @@ describe.only('Bookmarks Endpoints', () => {
             .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
             .expect(postRes.body)
         });
-          
       });
-  });
+
+      const requiredFields = ['title', 'url', 'rating'];
+      requiredFields.forEach(field => {
+        const newBookmark = {
+          title: "Some Title",
+          url: "http://someurl.com",
+          rating: 4
+          };
+    
+        it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+          delete newBookmark[field];
+  
+          return supertest(app)
+            .post('/bookmarks')
+            .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+            .send(newBookmark)
+            .expect(400, { error: { missingReqProps: [ `${field}` ] } });
+        });
+      });
+    });
 });
