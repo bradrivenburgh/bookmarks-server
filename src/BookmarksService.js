@@ -11,7 +11,6 @@ const BookmarksService = {
       .where('id', id)
       .first();
   },
-  //insertBookmark
   insertArticle(knexInstance, newBookmark) {
     return knexInstance
       .insert(newBookmark)
@@ -19,9 +18,13 @@ const BookmarksService = {
       .returning('*')
       .then(rows => rows[0])
   },
-
-  //deleteBookmark
-
+  deleteBookmark(knexInstance, id) {
+    return knexInstance
+      .select('*')
+      .from('bookmarks')
+      .where({ id })
+      .delete()
+  },
   //updateBookmark
 
 };

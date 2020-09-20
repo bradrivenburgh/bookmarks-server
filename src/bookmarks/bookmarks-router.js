@@ -1,8 +1,6 @@
 const express = require('express');
 const xss = require('xss');
-const { v4: uuid } = require('uuid');
 const { logger } = require('../logger');
-const { bookmarks } = require('../store');
 const { validateProperties } = require('./validationFuncs');
 const BookmarksService = require('../BookmarksService');
 
@@ -23,7 +21,7 @@ bookmarksRouter
       .then(bookmarks => {
         res
           .status(200)
-          .json(bookmarks)
+          .json(bookmarks.map(sanitizedBookmark))
       })
       .catch(next)
   });
@@ -80,15 +78,12 @@ bookmarksRouter
       .catch(next);
   });
 
-// LOCAL STORAGE BELOW THIS POINT; CONVERT TO DB
 // Set up /bookmarks/:id router / endpoint
 bookmarksRouter
   .route('/bookmarks/:id')
-  .get((req, res, next) => {
-    // Get the knexInstance that was set on server.js
+  .all((req, res, next) => {
     const knexInstance = req.app.get('db');
     const id = req.params.id;
-
     BookmarksService.getById(knexInstance, id)
       .then(bookmark => {
         // Validate the bookmark existence.  If not, return and log 404 error / message
@@ -98,44 +93,31 @@ bookmarksRouter
             .status(404)
             .json({ error: 'Bookmark not found'});
         }
-        // Send requested bookmark in json format
-        res
-          .status(200)
-          .json(bookmark);
+        res.bookmark = bookmark;
+        next();
       })
       .catch(next);
   });
 
 bookmarksRouter
   .route('/bookmarks/:id')
-  .delete((req, res) => {
-    // Get the id from the request params
-    const { id } = req.params;
-
-    // Get the bookmark index in the bookmarks list; returns -1 if
-    // it doesn't exist
-    const bookmarkIndex = bookmarks.findIndex(b => b.id === id);
-
-    //Validate wether the bookmark exists
-    if (bookmarkIndex === -1) {
-      logger.error(`Bookmark with the id ${id} does not exist`)
-      return res
-        .status(404)
-        .json({ error: "Bookmark not found" });
-    }
-
-    // Remove the bookmark from the bookmarks list; assume IDs are unique
-    bookmarks.splice(bookmarkIndex, 1);
-
-    // Log the deletion of the new bookmark
-    logger.info(`Bookmark with the id ${id} deleted.`)
-    
-    // Send client 204 and end
-    res
-      .status(204)
-      .end();
+  .get((req, res, next) => {
+    res.json(sanitizedBookmark(res.bookmark));
   });
 
+bookmarksRouter
+  .route('/bookmarks/:id')
+  .delete((req, res, next) => {
+    const knexInstance = req.app.get('db');
+    const id = req.params.id;
+    BookmarksService.deleteBookmark(knexInstance, id)
+      .then(numRowsDeleted => {
+        res
+        .status(204)
+        .end()
+      })
+      .catch(next)
+  });
 
 module.exports = {
   bookmarksRouter: bookmarksRouter
