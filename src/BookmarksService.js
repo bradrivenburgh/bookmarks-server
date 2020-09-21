@@ -16,17 +16,22 @@ const BookmarksService = {
       .insert(newBookmark)
       .into('bookmarks')
       .returning('*')
-      .then(rows => rows[0])
+      .then(rows => rows[0]);
   },
   deleteBookmark(knexInstance, id) {
     return knexInstance
       .select('*')
       .from('bookmarks')
       .where({ id })
-      .delete()
+      .delete();
   },
-  //updateBookmark
-
+  updateBookmark(knexInstance, id, newBookmarkData) {
+    return knexInstance
+      .select('*')
+      .from('bookmarks')
+      .where({ id })
+      .update(newBookmarkData);
+  }
 };
 
 module.exports = BookmarksService;

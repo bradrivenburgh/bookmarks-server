@@ -46,7 +46,7 @@ app.use(cors());
 app.use(helmet());
 app.use(express.json());
 app.use(validateBearerToken);
-app.use(bookmarksRouter);
+app.use('/api', bookmarksRouter);
 app.use(errorHandler);
 
 // Add endpoints

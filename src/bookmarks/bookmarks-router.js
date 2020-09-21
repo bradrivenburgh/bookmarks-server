@@ -1,5 +1,7 @@
+const path = require('path');
 const express = require('express');
 const xss = require('xss');
+
 const { logger } = require('../logger');
 const { ValidationService } = require('./ValidationService');
 const BookmarksService = require('../BookmarksService');
@@ -60,7 +62,7 @@ bookmarksRouter
         // Send response with location header and new (sanitized) bookmark
         res
           .status(201)
-          .location(`/bookmarks/${bookmark.id}`)
+          .location(path.posix.join(req.originalUrl, `/${bookmark.id}`))
           .json(sanitizedBookmark(bookmark))
       })
       .catch(next);
@@ -106,6 +108,8 @@ bookmarksRouter
       })
       .catch(next)
   });
+
+  //add PATCH endpoint here
 
 module.exports = {
   bookmarksRouter: bookmarksRouter
