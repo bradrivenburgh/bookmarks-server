@@ -17,18 +17,25 @@ const ValidationService = {
     }, {});
 
     // Check if reqBody prop values are falsey or
-    // if the 'rating' prop is a number between 0 and 5;
-    // if so, add them to 'invalidProps' prop
+    // if the 'rating' prop is a number between 0 and 5
     for (const [key, value] of Object.entries(reqBody)) {
       if (
-        (!value) ||
+        !value ||
         (key === "rating" && typeof value !== "number") ||
         (key === "rating" && (value < 0 || value > 5))
       ) {
+        // Create 'invalidProps' property if it doesn't exist
         if (!missingAndInvalidProps.invalidProps) {
           missingAndInvalidProps.invalidProps = [];
         }
-        missingAndInvalidProps.invalidProps.push(key);
+        // Add invalid props to invalidProps; give context for rating
+        if (key === "rating") {
+          missingAndInvalidProps.invalidProps.push(
+            `${key} (should be a number between 0 and 5)`
+          );
+        } else {
+          missingAndInvalidProps.invalidProps.push(key);
+        }
       }
     }
     return missingAndInvalidProps;
