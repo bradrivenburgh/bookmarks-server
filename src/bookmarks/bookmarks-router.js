@@ -1,7 +1,7 @@
 const express = require('express');
 const xss = require('xss');
 const { logger } = require('../logger');
-const { validateProperties } = require('./validationFuncs');
+const { ValidationService } = require('./ValidationService');
 const BookmarksService = require('../BookmarksService');
 
 const bookmarksRouter = express.Router();
@@ -34,42 +34,30 @@ bookmarksRouter
     
     // Get props from request body
     const { title, url, description, rating } = req.body;
-    const newBookmark = {
-      title,
-      url,
-      description,
-      rating
-    }
+
+    // Create new bookmark object
+    const newBookmark = { title, url, description, rating };
  
-    // Define the required properties
+    // Define the required properties for validation
     const requiredProps = ['title', 'url', 'rating'];
 
     // Validate properties in the request body
-    const errorObject = validateProperties(req.body, requiredProps);
+    const errorObject = ValidationService
+      .validateProperties(req.body, requiredProps);
 
-    // If needed, log and respond with missing or invalid props
+    // If needed, log and respond with validation errors
     if(Object.keys(errorObject).length) {
-      const {missingReqProps, invalidProps} = errorObject;
-      if (missingReqProps) {
-        logger.error(`Required properties are missing: ${missingReqProps.join(', ')}`);
-      }
-      if (invalidProps) {
-        logger.error(`Invalid property values provided: ${invalidProps.join(', ')}`);
-      }
-
-      // Send 400 response and object with missing and/or invalid props
-      return res
-        .status(400)
-        .json({error: errorObject})
+      return ValidationService
+        .reportValidationErrors(errorObject, res);
     }
 
-    // Add the bookmark to the database
+    // If validation passes, add the bookmark to the database
     BookmarksService.insertArticle(knexInstance, newBookmark)
       .then(bookmark => {
         // Log bookmark creation 
         logger.info(`Card with the id ${bookmark.id} created`);
 
-        // Send response with location header and created bookmark
+        // Send response with location header and new (sanitized) bookmark
         res
           .status(201)
           .location(`/bookmarks/${bookmark.id}`)
