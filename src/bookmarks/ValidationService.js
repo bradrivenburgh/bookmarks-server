@@ -1,58 +1,70 @@
-const { logger } = require('../logger');
-
 const ValidationService = {
-  validateProperties(reqBody, reqProps) {
-    // Get the keys array from the reqBody object
-    const reqBodyKeys = Object.keys(reqBody);
-
-    // Create the error object; if keys missing, add missing prop with missing keys
-    const missingAndInvalidProps = reqProps.reduce((acc, key) => {
-      if (!reqBodyKeys.includes(key)) {
-        if (!acc.missing) {
-          acc.missingReqProps = [];
-        }
-        acc.missingReqProps.push(key);
+  validateProperties(obj, requiredProps, requiredPropValFuncs = {}) {
+    // Filter requiredProps array for missing required props
+    const missingProps = requiredProps.filter(prop => {
+      if(obj[prop] === undefined) {
+        return prop;
       }
-      return acc;
-    }, {});
+    });
 
-    // Check if reqBody prop values are falsey or
-    // if the 'rating' prop is a number between 0 and 5
-    for (const [key, value] of Object.entries(reqBody)) {
-      if (
-        !value ||
-        (key === "rating" && typeof value !== "number") ||
-        (key === "rating" && (value < 0 || value > 5))
-      ) {
-        // Create 'invalidProps' property if it doesn't exist
-        if (!missingAndInvalidProps.invalidProps) {
-          missingAndInvalidProps.invalidProps = [];
-        }
-        // Add invalid props to invalidProps; give context for rating
-        if (key === "rating") {
-          missingAndInvalidProps.invalidProps.push(
-            `${key} (should be a number between 0 and 5)`
-          );
-        } else {
-          missingAndInvalidProps.invalidProps.push(key);
+    const invalidProps = [];     
+    // For each key/value pair in obj, check if it is in missingProps
+    // If it is, skip that iteration of the for loop
+    for (const [key, value] of Object.entries(obj)) {
+      if(missingProps.find(prop => prop === key)) {
+        continue;
+      }
+
+      // If the validation function for values provided by caller
+      // has a property that matches those in requiredPropValFuncs,
+      // and if its value returns false, add it to invalidProps array
+      if(requiredPropValFuncs[key]) {
+        if(requiredPropValFuncs[key](value) === false){
+          // Store invalid key and value for later processing
+          invalidProps.push(key)
         }
       }
     }
-    return missingAndInvalidProps;
+    // Return error object with 2 arrays
+    return {missingProps, invalidProps}
   },
-  reportValidationErrors(errorObject, res) {
-    const {missingReqProps, invalidProps} = errorObject;
-    if (missingReqProps) {
-      logger.error(`Required properties are missing: ${missingReqProps.join(', ')}`);
+  createValidationErrorObject(obj, customInvalidPropsMessages = {}) {
+    const {missingProps, invalidProps} = obj;
+    let copyInvalidProps = invalidProps;
+    let reportArr = [];
+
+    const defaultInvalidPropMessage = (arr) =>     
+    `Invalid property values provided: ${arr.join(', ')}`;
+    const defaultMissingPropsMessage = (arr) =>
+      `Required properties are missing: ${arr.join(', ')}`;
+    
+    // Add custom messages for specific invalid properties to reportArr;
+    // remove invalid props with custom messages from copyInvalidProps;
+    // if no custom invalid prop messages, add default invalid prop message
+    if (Object.keys(customInvalidPropsMessages).length) {
+      for (const [key, value] of Object.entries(customInvalidPropsMessages)) {
+        if(missingProps.find(prop => prop === key)) {
+          continue;
+        }
+        if (copyInvalidProps.find(prop => prop === key)) {
+          reportArr.push(value);
+          copyInvalidProps = copyInvalidProps
+            .filter(prop => prop !== key)
+        }
+      }
     }
-    if (invalidProps) {
-      logger.error(`Invalid property values provided: ${invalidProps.join(', ')}`);
+    
+    // Add the default message for other invalid props 
+    if (copyInvalidProps.length) {
+      reportArr.push(defaultInvalidPropMessage(copyInvalidProps));
+    }
+    
+    // Add missing props message
+    if (missingProps.length) {
+      reportArr.push(defaultMissingPropsMessage(missingProps));
     }
 
-    // Send 400 response and object with missing and/or invalid props
-    return res
-      .status(400)
-      .json({error: errorObject})
+    return { error: { message: reportArr.join('; ') }};
   },
 }
 

@@ -224,4 +224,53 @@ describe.only('Bookmarks Endpoints', () => {
     });
   });
 
+  describe.skip('PATCH /api/bookmarks/:id', () => {
+    context('Given no bookmarks in the db', () => {
+      it('responds with 404', () => {
+        const bookmarkId = 123456;
+        return supertest(app)
+          .patch(`/api/bookmarks/${bookmarkId}`)
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .expect(404, {error: 'Bookmark not found'})
+      });
+    });
+
+    context('Given there are bookmarks in the db', () => {
+      const testBookmarks = makeBookmarksArray();
+
+      beforeEach('insert bookmarks', () => {
+        return db 
+          .insert(testBookmarks)
+          .into('bookmarks')
+      });
+
+      it('responds with 204 and updates the article', () => {
+        const idToUpdate = 2;
+        const updateBookmark = {
+          title: 'updated title',
+          url: 'http://updatedurl.com',
+          description: 'updated description',
+          rating: 4
+        };
+        const expectedBookmark = {
+          ...testBookmarks[idToUpdate - 1],
+          ...updateBookmark
+        };
+
+        return supertest(app)
+          .patch(`/api/bookmarks/${idToUpdate}`)
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .expect(204)
+          .then(res => {
+            return supertest(app)
+              .get(`/api/bookmarks/${idToUpdate}`)
+              .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+              .expect(expectedBookmark)
+          });
+      });
+
+      
+    });
+
+  });
 });

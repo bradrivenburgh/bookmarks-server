@@ -43,14 +43,52 @@ bookmarksRouter
     // Define the required properties for validation
     const requiredProps = ['title', 'url', 'rating'];
 
-    // Validate properties in the request body
-    const errorObject = ValidationService
-      .validateProperties(req.body, requiredProps);
+    // Define invalid values for caller's required properties;
+    // pass this to ValidationService
+    const requiredPropValFuncs = {
+      title: (value) => {
+        if (!value) { 
+          return false;
+        }
+      },
+      url: (value) => {
+        if (!value) {
+          return false;
+        }
+      },
+      rating: (value) => {
+        if (typeof value !== 'number' || value < 0 || value > 5) {
+          return false;
+        }
+      },
+    };
 
-    // If needed, log and respond with validation errors
-    if(Object.keys(errorObject).length) {
-      return ValidationService
-        .reportValidationErrors(errorObject, res);
+    // Check request body for missing or invalid required props
+    const missingAndInvalidProps = ValidationService.validateProperties(
+      req.body, 
+      requiredProps, 
+      requiredPropValFuncs
+    );
+    
+    // If there are missing or invalid required props log the error
+    // and send a 400 response with JSON error object
+    if (
+      missingAndInvalidProps.invalidProps.length ||
+      missingAndInvalidProps.missingProps.length
+    ) {
+ 
+      const customInvalidPropsMessages = {
+        rating: 'Invalid property provided: rating -- must be a number between 0 and 5',
+      };
+ 
+      const validationErrorObj = ValidationService.createValidationErrorObject(
+        missingAndInvalidProps,
+        customInvalidPropsMessages
+      );
+ 
+      logger.error(validationErrorObj.error.message);
+ 
+      return res.status(400).json(validationErrorObj);
     }
 
     // If validation passes, add the bookmark to the database
@@ -109,7 +147,7 @@ bookmarksRouter
       .catch(next)
   });
 
-  //add PATCH endpoint here
+//bookmarksRouter
 
 module.exports = {
   bookmarksRouter: bookmarksRouter
