@@ -176,7 +176,6 @@ describe.only('Bookmarks Endpoints', () => {
           .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
           .send(newBookmark)
           .then(res => {
-//            console.log(res)
             expect(res.status).to.eql(400)
             return (field === 'rating') ?
             expect(res.text).to.eql(JSON.stringify({error: { message: `Invalid property provided: ${field} -- must be a number between 0 and 5` } })) :
@@ -241,7 +240,7 @@ describe.only('Bookmarks Endpoints', () => {
     });
   });
 
-  describe.skip('PATCH /api/bookmarks/:id', () => {
+  describe('PATCH /api/bookmarks/:id', () => {
     context('Given no bookmarks in the db', () => {
       it('responds with 404', () => {
         const bookmarkId = 123456;
@@ -257,17 +256,17 @@ describe.only('Bookmarks Endpoints', () => {
 
       beforeEach('insert bookmarks', () => {
         return db 
-          .insert(testBookmarks)
           .into('bookmarks')
+          .insert(testBookmarks)
       });
 
-      it('responds with 204 and updates the article', () => {
+      it('responds with 204 and updates the bookmark', () => {
         const idToUpdate = 2;
         const updateBookmark = {
           title: 'updated title',
           url: 'http://updatedurl.com',
           description: 'updated description',
-          rating: 4
+          rating: "4"
         };
         const expectedBookmark = {
           ...testBookmarks[idToUpdate - 1],
@@ -277,6 +276,7 @@ describe.only('Bookmarks Endpoints', () => {
         return supertest(app)
           .patch(`/api/bookmarks/${idToUpdate}`)
           .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .send(updateBookmark)
           .expect(204)
           .then(res => {
             return supertest(app)
@@ -286,7 +286,44 @@ describe.only('Bookmarks Endpoints', () => {
           });
       });
 
-      
+      it('responds with 400 when no required fields supplied', () => {
+        const idToUpdate = 2;
+        return supertest(app)
+          .patch(`/api/bookmarks/${idToUpdate}`)
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .send({ irrelevantField: 'foo' })
+          .expect(400, {
+            error: {
+              message: `Request body must contain either 'title', 'url', or 'rating'`
+            }
+          });
+      });
+
+      it('responds with 204 when updating only a subset of fields', () => {
+        const idToUpdate = 2;
+        const updateBookmark = {
+          title: 'updated title',
+          url: 'http://www.updatedurl.com',
+          description: 'updated description',
+        };
+        const expectedBookmark = {
+          ...testBookmarks[idToUpdate - 1],
+          ...updateBookmark
+        };
+
+        return supertest(app)
+          .patch(`/api/bookmarks/${idToUpdate}`)
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .send({ ...updateBookmark, fieldToIgnore: 'should not be in GET response' })
+          .expect(204)
+          .then(res => {
+            return supertest(app)
+              .get(`/api/bookmarks/${idToUpdate}`)
+              .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+              .expect(expectedBookmark)
+          });
+      });
+
     });
 
   });

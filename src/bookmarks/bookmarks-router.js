@@ -2,9 +2,13 @@ const path = require('path');
 const express = require('express');
 const xss = require('xss');
 
-const { logger } = require('../logger');
-const { ValidationService } = require('./ValidationService');
-const BookmarksService = require('../BookmarksService');
+const { logger } = require("../logger");
+const { ValidationService } = require("../ValidationService");
+const {
+  requiredPropValFuncs,
+  customInvalidPropsMessages,
+} = require("./callerValidationData");
+const BookmarksService = require("../BookmarksService");
 
 const bookmarksRouter = express.Router();
 const sanitizedBookmark = (bookmark) => ({
@@ -40,28 +44,10 @@ bookmarksRouter
     // Create new bookmark object
     const newBookmark = { title, url, description, rating };
  
+    // VALIDATION
+
     // Define the required properties for validation
     const requiredProps = ['title', 'url', 'rating'];
-
-    // Define invalid values for caller's required properties;
-    // pass this to ValidationService
-    const requiredPropValFuncs = {
-      title: (value) => {
-        if (!value) { 
-          return false;
-        }
-      },
-      url: (value) => {
-        if (!value) {
-          return false;
-        }
-      },
-      rating: (value) => {
-        if (typeof value !== 'number' || value < 0 || value > 5) {
-          return false;
-        }
-      },
-    };
 
     // Check request body for missing or invalid required props
     const missingAndInvalidProps = ValidationService.validateProperties(
@@ -76,10 +62,6 @@ bookmarksRouter
       missingAndInvalidProps.invalidProps.length ||
       missingAndInvalidProps.missingProps.length
     ) {
- 
-      const customInvalidPropsMessages = {
-        rating: 'Invalid property provided: rating -- must be a number between 0 and 5',
-      };
  
       const validationErrorObj = ValidationService.createValidationErrorObject(
         missingAndInvalidProps,
@@ -147,7 +129,40 @@ bookmarksRouter
       .catch(next)
   });
 
-//bookmarksRouter
+bookmarksRouter
+  .route('/bookmarks/:id')
+  .patch((req, res, next) => {
+    const knexInstance = req.app.get('db');
+    const { title, url, description, rating } = req.body;
+    const bookmarkToUpdate = { title, url, description, rating };
+
+    // Validation below is just checking if at least one of the 
+    // required properties is being updated; differs from 
+    // the validation for POST, which checks for missing and invalid
+    // required properties and gives a detailed message regarding
+    // what is missing or invalid.
+    const numberOfValues = Object.values(bookmarkToUpdate).filter(Boolean).length
+    if (numberOfValues === 0) {
+      return res.status(400).json({
+        error: {
+          message: `Request body must contain either 'title', 'url', or 'rating'`
+        }
+      })
+    }
+
+    BookmarksService.updateBookmark(
+      knexInstance, 
+      req.params.id, 
+      sanitizedBookmark(bookmarkToUpdate)
+    )
+      .then(numRowsAffected => {
+        res
+          .status(204)
+          .end()
+      })
+      .catch(next)
+
+  });
 
 module.exports = {
   bookmarksRouter: bookmarksRouter

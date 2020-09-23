@@ -1,0 +1,29 @@
+    // Define invalid values for caller's required properties;
+    // pass this to ValidationService
+    const requiredPropValFuncs = {
+      title: (value) => {
+        if (!value) { 
+          return false;
+        }
+      },
+      url: (value) => {
+        if (!value) {
+          return false;
+        }
+      },
+      rating: (value) => {
+        if (typeof value !== 'number' || value < 0 || value > 5) {
+          return false;
+        }
+      },
+    };
+
+    // Custom validation message for 'rating' property
+    const customInvalidPropsMessages = {
+      rating: 'Invalid property provided: rating -- must be a number between 0 and 5',
+    };
+
+    module.exports = {
+      requiredPropValFuncs,
+      customInvalidPropsMessages
+    };
