@@ -165,8 +165,25 @@ describe.only('Bookmarks Endpoints', () => {
           .post('/api/bookmarks')
           .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
           .send(newBookmark)
-          .expect(400, { error: { missingReqProps: [ `${field}` ] } });
+          .expect(400, { error: { message: `Required properties are missing: ${field}` } });
       });
+
+      it(`responds with 400 and an error message when the '${field}' is invalid`, () => {
+        newBookmark[field] = null;
+
+        return supertest(app)
+          .post('/api/bookmarks')
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .send(newBookmark)
+          .then(res => {
+//            console.log(res)
+            expect(res.status).to.eql(400)
+            return (field === 'rating') ?
+            expect(res.text).to.eql(JSON.stringify({error: { message: `Invalid property provided: ${field} -- must be a number between 0 and 5` } })) :
+            expect(res.text).to.eql(JSON.stringify({error: { message: `Invalid property values provided: ${field}` } }));
+          })
+      });
+
     });
 
     context(`Given an XSS attack bookmark`, () => {
