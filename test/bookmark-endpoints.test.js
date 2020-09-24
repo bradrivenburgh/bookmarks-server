@@ -266,7 +266,7 @@ describe.only('Bookmarks Endpoints', () => {
           title: 'updated title',
           url: 'http://updatedurl.com',
           description: 'updated description',
-          rating: "4"
+          rating: 4
         };
         const expectedBookmark = {
           ...testBookmarks[idToUpdate - 1],

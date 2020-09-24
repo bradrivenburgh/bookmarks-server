@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS bookmarks (
   title TEXT NOT NULL,
   url TEXT NOT NULL,
   description TEXT,
-  rating NUMERIC DEFAULT 0 NOT NULL
+  rating INTEGER DEFAULT 0 NOT NULL
 );
 
 COMMIT;
