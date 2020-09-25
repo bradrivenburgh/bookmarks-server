@@ -1,5 +1,7 @@
 const ValidationService = {
-  validateProperties(obj, requiredProps, requiredPropValFuncs = {}) {
+  validateProperties(obj, requiredDictionary = {}) {
+    // Get the required properties from the requiredDictionary
+    const requiredProps = Object.keys(requiredDictionary);
     // Filter requiredProps array for missing required props
     const missingProps = requiredProps.filter(prop => {
       if(obj[prop] === undefined) {
@@ -18,8 +20,8 @@ const ValidationService = {
       // If the validation function for values provided by caller
       // has a property that matches those in requiredPropValFuncs,
       // and if its value returns false, add it to invalidProps array
-      if(requiredPropValFuncs[key]) {
-        if(requiredPropValFuncs[key](value) === false){
+      if(requiredDictionary[key]) {
+        if(requiredDictionary[key](value) === false){
           // Store invalid key and value for later processing
           invalidProps.push(key)
         }
@@ -40,7 +42,6 @@ const ValidationService = {
     
     // Add custom messages for specific invalid properties to reportArr;
     // remove invalid props with custom messages from copyInvalidProps;
-    // if no custom invalid prop messages, add default invalid prop message
     if (Object.keys(customInvalidPropsMessages).length) {
       for (const [key, value] of Object.entries(customInvalidPropsMessages)) {
         if(missingProps.find(prop => prop === key)) {
@@ -54,7 +55,7 @@ const ValidationService = {
       }
     }
     
-    // Add the default message for other invalid props 
+    // Add the default message for remaining invalid props 
     if (copyInvalidProps.length) {
       reportArr.push(defaultInvalidPropMessage(copyInvalidProps));
     }

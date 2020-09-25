@@ -1,6 +1,6 @@
     // Define invalid values for caller's required properties;
     // pass this to ValidationService
-    const requiredPropValFuncs = {
+    const requiredDictionary = {
       title: (value) => {
         if (!value) { 
           return false;
@@ -24,6 +24,6 @@
     };
 
     module.exports = {
-      requiredPropValFuncs,
+      requiredDictionary,
       customInvalidPropsMessages
     };

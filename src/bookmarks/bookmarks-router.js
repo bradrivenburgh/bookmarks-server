@@ -5,7 +5,7 @@ const xss = require('xss');
 const { logger } = require("../logger");
 const { ValidationService } = require("../ValidationService");
 const {
-  requiredPropValFuncs,
+  requiredDictionary,
   customInvalidPropsMessages,
 } = require("./callerValidationData");
 const BookmarksService = require("../BookmarksService");
@@ -46,14 +46,10 @@ bookmarksRouter
  
     // VALIDATION
 
-    // Define the required properties for validation
-    const requiredProps = ['title', 'url', 'rating'];
-
     // Check request body for missing or invalid required props
     const missingAndInvalidProps = ValidationService.validateProperties(
       req.body, 
-      requiredProps, 
-      requiredPropValFuncs
+      requiredDictionary
     );
     
     // If there are missing or invalid required props log the error
