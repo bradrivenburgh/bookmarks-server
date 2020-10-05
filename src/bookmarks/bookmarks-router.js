@@ -8,7 +8,7 @@ const {
   requiredDictionary,
   customInvalidPropsMessages,
 } = require("./callerValidationData");
-const BookmarksService = require("../BookmarksService");
+const BookmarksService = require("./BookmarksService");
 
 const bookmarksRouter = express.Router();
 const sanitizedBookmark = (bookmark) => ({
@@ -137,6 +137,8 @@ bookmarksRouter
     // the validation for POST, which checks for missing and invalid
     // required properties and gives a detailed message regarding
     // what is missing or invalid.
+    // Note: filter(Boolean) is basically the same as saying:
+    //    arr.filter( function(x) { return Boolean(x); });
     const numberOfValues = Object.values(bookmarkToUpdate).filter(Boolean).length
     if (numberOfValues === 0) {
       return res.status(400).json({
