@@ -16,7 +16,7 @@ const morganOption = (NODE_ENV === 'production')
   : 'common';
 
 const corsOptions = {
-  origin: 'https://bookmarks-app-wheat.vercel.app/',
+  origin: 'https://bookmarks-app-wheat.vercel.app',
   optionsSuccessStatus: 200
 }
 
