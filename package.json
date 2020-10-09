@@ -12,6 +12,7 @@
     "start": "node src/server.js",
     "predeploy": "npm audit",
     "deploy": "git push heroku master",
+    "env": "./heroku_env.sh",
     "postdeploy": "npm run migrate:production"
   },
   "keywords": [],

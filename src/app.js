@@ -15,6 +15,11 @@ const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
   : 'common';
 
+const corsOptions = {
+  origin: 'https://thawing-hollows-57701.herokuapp.com/',
+  optionsSuccessStatus: 200
+}
+
 // Define validation function
 function validateBearerToken(req, res, next) {
   const apiToken = process.env.API_TOKEN;
@@ -42,7 +47,7 @@ function errorHandler(error, req, res, next) {
 
 // Add middleware
 app.use(morgan(morganOption));
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(express.json());
 app.use(validateBearerToken);
