@@ -16,7 +16,7 @@ const morganOption = (NODE_ENV === 'production')
   : 'common';
 
 const corsOptions = {
-  origin: 'https://thawing-hollows-57701.herokuapp.com/',
+  origin: 'https://bookmarks-app-wheat.vercel.app/',
   optionsSuccessStatus: 200
 }
 
